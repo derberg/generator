@@ -1,4 +1,4 @@
-asyncapi: '2.0.0'
+asyncapi: '2.1.0'
 
 externalDocs:
   description: Find more info here
@@ -57,7 +57,7 @@ servers:
           - '5672'
     security:
       - user-password: []
-  dommy-kafka:
+  dummy-kafka:
     url: http://localhost:{port}
     protocol: kafka
     description: dummy Kafka broker
@@ -69,6 +69,8 @@ defaultContentType: application/json
 
 channels:
   dummy/channel/with/{dummy}/parameter/create:
+    x-dummy-security:
+      $ref: '#/components/securitySchemes/supportedOauthFlows/flows/clientCredentials'
     description: Dummy channel description.
     parameters:
       dummy:
@@ -106,6 +108,19 @@ channels:
         is: routingKey
     subscribe:
       operationId: receiveSystemInfo
+      bindings:
+        amqp:
+          expiration: 100000
+          userId: guest
+          cc: [ 'user.logs' ]
+          priority: 10
+          deliveryMode: 2
+          mandatory: false
+          bcc: [ 'external.audit' ]
+          replyTo: user.signedup
+          timestamp: true
+          ack: false
+          bindingVersion: 0.1.0
       message:
         $ref: '#/components/messages/dummyInfo'
 
@@ -142,6 +157,24 @@ components:
             type: string
       payload:
         $ref: "#/components/schemas/dummyCreated"
+      bindings:
+        kafka:
+          key:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              type:
+                type: string
+                enum: [ 'type1', "type2" ]
+          bindingVersion: '0.1.0'
+        amqp:
+          contentEncoding: gzip
+          messageType: 'user.signup'
+          bindingVersion: 0.1.0
+      x-response:
+        $ref: "#/components/messages/dummyInfo"
     dummyInfo:
       name: dummyInfo
       title: Dummy system info
@@ -157,28 +190,44 @@ components:
       payload:
         $ref: "#/components/schemas/dummyInfo"
       examples:
-        - headers:
+        - name: option1example
+          summary: this is dummy summary for option1example
+          headers:
             my-app-header: 12
           payload:
             prop1: option1
             sentAt: 2020-01-31T13:24:53Z
-        - headers:
+        - name: headerExample
+          headers:
             my-app-header: 13
         - payload:
             prop1: option2
             sentAt: 2020-01-31T13:24:53Z
-          
+
 
   schemas:
     dummyCreated:
       type: object
       required:
         - prop2
+      x-schema-extensions-as-object:
+            type: object
+            properties:
+              prop1:
+                type: string
+              prop2:
+                type: integer
+                minimum: 0
+      x-schema-extensions-as-primitive: dummy
+      x-schema-extensions-as-array:
+        - "item1"
+        - "item2"
       properties:
         prop1:
           type: integer
           minimum: 0
           description: Dummy prop1
+          x-prop1-dummy: dummy extension
         prop2:
           type: string
           description: Dummy prop2
@@ -190,6 +239,8 @@ components:
           $ref: "#/components/schemas/dummyArrayWithArray"
         dummyObject:
           $ref: "#/components/schemas/dummyObject"
+        dummyArrayRank:
+          $ref: '#/components/schemas/dummyArrayRank'
     dummyInfo:
       type: object
       required:
@@ -220,6 +271,12 @@ components:
           $ref: "#/components/schemas/sentAt"
         dummyObjectProp2:
           $ref: "#/components/schemas/dummyRecursiveObject"
+        dummyObjectProp3:
+          type: object
+          additionalProperties: true
+        dummyObjectProp4:
+          type: object
+          additionalProperties: false
     dummyRecursiveObject:
       type: object
       properties:
@@ -231,6 +288,37 @@ components:
       type: string
       format: date-time
       description: Date and time when the message was sent.
+    dummyArrayRank:
+      type: object
+      properties:
+        dummyArrayValueRank: 
+          $ref: '#/components/schemas/dummyArrayValueRank'
+        dummyArrayDimensions: 
+          $ref: '#/components/schemas/dummyArrayArrayDimensions'
+    dummyArrayValueRank:
+      description: >
+        This Attribute indicates whether the val Attribute of the datapoint is an
+        array and how many dimensions the array has.
+      type: integer
+      default: -1
+      examples:
+        - 2
+      oneOf:
+        - const: -1
+          description: 'Scalar: The value is not an array.'
+        - const: 0
+          description: 'OneOrMoreDimensions: The value is an array with one or more dimensions.'
+        - const: 1
+          description: 'OneDimension: The value is an array with one dimension.'
+        - const: 2
+          description: 'The value is an array with two dimensions.'
+    dummyArrayArrayDimensions:
+      type: array
+      items:
+        type: integer
+        minimum: 0
+      examples:
+        - [3, 5]
 
   securitySchemes:
     user-password:
@@ -292,4 +380,6 @@ components:
     kafka:
       bindings:
         kafka:
-          clientId: my-app-id
+          groupId: my-app-group-id
+          clientId: my-app-client-id
+          bindingVersion: '0.1.0'
