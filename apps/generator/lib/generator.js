@@ -94,7 +94,7 @@ class Generator {
    * @param {String} [options.registry.token]     Optional parameter to pass npm registry auth token that you can grab from .npmrc file
    */
 
-  constructor(templateName, targetDir, { templateParams = {}, entrypoint, noOverwriteGlobs, disabledHooks, output = 'fs', forceWrite = false, install = false, debug = false, mapBaseUrlToFolder = {}, registry = {}, compile = false } = {}) {
+  constructor(templateName, targetDir, { templateParams = {}, entrypoint, noOverwriteGlobs, disabledHooks, output = 'fs', forceWrite = false, install = false, debug = false, mapBaseUrlToFolder = {}, registry = {}, compile = true } = {}) {
     const options = arguments[arguments.length - 1];
     this.verifyoptions(options);
     if (!templateName) throw new Error('No template name has been specified.');
