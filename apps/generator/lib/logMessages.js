@@ -2,7 +2,7 @@ const TEMPLATE_INSTALL_FLAG_MSG = 'because you passed --install flag';
 
 const TEMPLATE_INSTALL_DISK_MSG = 'because the template cannot be found on disk';
 
-const NODE_MODULES_INSTALL ='Remember that your local template must have its own node_modules installed first, \"npm install\" is not triggered by the generator.';
+const NODE_MODULES_INSTALL = 'Remember that your local template must have its own node_modules installed first, "npm install" is not triggered by the generator.';
 
 const NPM_INSTALL_TRIGGER = 'Installation of template located on disk technically means symlink creation betweed node_modules of the generator and template sources. Your local template must have its own node_modules, "npm install" is not triggered.';
 
@@ -19,7 +19,7 @@ function templateNotFound(templateName) {
 }
 
 function packageNotAvailable(packageDetails) {
-  if (packageDetails && packageDetails.pkgPath) {
+  if (packageDetails?.pkgPath) {
     return `Unable to resolve template location at ${packageDetails.pkgPath}. Package is not available locally.`;
   }
 
@@ -46,6 +46,10 @@ function conditionalFilesMatched(relativeSourceFile) {
   return `${relativeSourceFile} was not generated because condition specified for this file in template configuration in conditionalFiles matched.`;
 }
 
+function compileEnabled(dir, output_dir) {
+  return `Transpilation of files ${dir} into ${output_dir} started.`;
+}
+
 module.exports = {
   TEMPLATE_INSTALL_FLAG_MSG,
   TEMPLATE_INSTALL_DISK_MSG,
@@ -59,5 +63,6 @@ module.exports = {
   templateSuccessfullyInstalled,
   relativeSourceFileNotGenerated,
   conditionalFilesMatched,
+  compileEnabled,
   skipOverwrite
 };
